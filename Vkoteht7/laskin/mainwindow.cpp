@@ -8,20 +8,21 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    // Yhdistä numerot ja handlerin
+    // Yhdistä numerot ja käsittelijä
     QList<QPushButton*> numberButtons = findChildren<QPushButton*>(QRegularExpression("^N[0-9]$"));
     for (QPushButton *button : numberButtons) {
         connect(button, &QPushButton::clicked, this, &MainWindow::numberClickHandler);
     }
 
-    // Yhdoistä operaatiot
+    // Yhdistä operaattorit
     connect(ui->add, &QPushButton::clicked, this, &MainWindow::addSubMulDivClickHandler);
     connect(ui->sub, &QPushButton::clicked, this, &MainWindow::addSubMulDivClickHandler);
     connect(ui->mul, &QPushButton::clicked, this, &MainWindow::addSubMulDivClickHandler);
     connect(ui->div, &QPushButton::clicked, this, &MainWindow::addSubMulDivClickHandler);
 
-    // Yhdistä clear ja enter
-    connect(ui->clear, &QPushButton::clicked, this, &MainWindow::clearAndEnterClickHandler );
+    // Yhdistä tyhjennys ja enter
+    connect(ui->clear, &QPushButton::clicked, this, &MainWindow::clearAndEnterClickHandler);
+    connect(ui->enter, &QPushButton::clicked, this, &MainWindow::clearAndEnterClickHandler);
 }
 
 void MainWindow::numberClickHandler()
@@ -31,10 +32,10 @@ void MainWindow::numberClickHandler()
 
     QString buttonText = button->text();
 
-    if (operand.isEmpty()) {
+    if (operand == 0) { // Jos operaattoria ei ole valittu, lisätään numero1:een
         number1 += buttonText;
         ui->num1->setText(number1);
-    } else {
+    } else { // Muuten lisätään numero2:een
         number2 += buttonText;
         ui->num2->setText(number2);
     }
@@ -42,30 +43,34 @@ void MainWindow::numberClickHandler()
     qDebug() << "number1:" << number1 << "number2:" << number2;
 }
 
-void MainWindow::addSubMulDivClickHandler()
+void MainWindow::addSubMulDivClickHandler() //Operaatioiden handlaaminen
 {
     QPushButton *button = qobject_cast<QPushButton*>(sender());
     if (!button || number1.isEmpty()) return;
 
     QString op = button->text();
-    operand = op; // Store operator as string
-    operand = op[0].toLatin1(); // Store operator as char for calculation
+    if (op == "+") operand = '+';
+    else if (op == "-") operand = '-';
+    else if (op == "*") operand = '*';
+    else if (op == "/") operand = '/';
 }
 
 void MainWindow::clearAndEnterClickHandler()
 {
-    if (sender() == ui->clear) {
-        // Clear all fields
+    QPushButton *button = qobject_cast<QPushButton*>(sender());
+
+    if (button == ui->clear) {
+        // Tyhjennä kentät
         number1.clear();
         number2.clear();
-        operand.clear();
+        operand = 0;
+        result = 0.0;
         ui->num1->clear();
         ui->num2->clear();
         ui->result->clear();
-        operand = 0; // Reset operand
-    } else if (sender() == ui->enter) {
-        // Perform calculation when "Enter" is clicked
-        if (number1.isEmpty() || number2.isEmpty() || selectedOperator.isEmpty())
+    } else if (button == ui->enter) {
+        // Lasku toimitukset
+        if (number1.isEmpty() || number2.isEmpty() || operand == 0)
             return;
 
         float num1 = number1.toFloat();
@@ -80,18 +85,18 @@ void MainWindow::clearAndEnterClickHandler()
         }
 
         ui->result->setText(QString::number(result));
-        qDebug() << "Result:" << result;
+        qDebug() << "Tulos:" << result;
     }
 }
 
-void MainWindow::resetLineEdits()
+void MainWindow::resetLineEdits()   //Tyhjennetään UI
 {
     ui->num1->clear();
     ui->num2->clear();
     ui->result->clear();
 }
 
-MainWindow::~MainWindow()  // Destruktori
+MainWindow::~MainWindow()
 {
     delete ui;
 }
